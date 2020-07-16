@@ -1,0 +1,488 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import pandas as pd\n",
+    "from scipy.interpolate import interp1d\n",
+    "from multiprocessing import Pool\n",
+    "from functools import partial \n",
+    "\n",
+    "# time line\n",
+    "T_min = 15\n",
+    "T_max = 80\n",
+    "T_y = 65\n",
+    "\n",
+    "# States of the economy, GOOD or BAD, {1 : GOOD}, {0 : BAD}\n",
+    "S = [0,1]\n",
+    "# All the money amount are denoted in thousand dollars\n",
+    "earningShock = [0.9,1.1]\n",
+    "# Define transition matrix of economical states\n",
+    "# GOOD -> GOOD 0.8, BAD -> BAD 0.4 \n",
+    "P = np.array([[0.4, 0.6],[0.2, 0.8]])\n",
+    "# current risk free interest rate \n",
+    "r_f = [0.01 ,0.03]\n",
+    "# stock return depends on current and future econ states\n",
+    "def r_m(current_state, next_state):\n",
+    "    if (current_state == 1 and next_state == 1):\n",
+    "        return 0.25\n",
+    "    elif (current_state == 1 and next_state == 0):\n",
+    "        return -0.05\n",
+    "    elif (current_state == 0 and next_state == 1):\n",
+    "        return 0.2\n",
+    "    else:\n",
+    "        return -0.1\n",
+    "    \n",
+    "#Define the utility function\n",
+    "def u(c):\n",
+    "    return np.log(c)\n",
+    "        \n",
+    "\n",
+    "# Define deterministic function to captures the hump shape of life-cycle earnings.\n",
+    "ageTick = [15, 25, 35, 45, 55, 80]\n",
+    "earning = [35, 54, 67, 71, 60, 37]\n",
+    "cspline = interp1d(ageTick, earning, kind = \"cubic\")\n",
+    "detEarning = np.array(cspline(np.linspace(15,80,66)))\n",
+    "def chi(age):\n",
+    "    return detEarning[int(age-T_min)]\n",
+    "\n",
+    "def y(age, s):\n",
+    "    return chi(age) * earningShock[int(s)]\n",
+    "\n",
+    "# Define the transtiion of state \n",
+    "def transition(Z, a):\n",
+    "    '''\n",
+    "        Input: Z is a tuple containing states variables: (w, s) which is the current wealth and econ state\n",
+    "               a is the action taken with contains variables: (c, b, k) which is the combination of consumption, bond and stock\n",
+    "        Output: the next possible states with corresponding probabilities\n",
+    "    '''\n",
+    "    w, s = Z\n",
+    "    c, b, k = a\n",
+    "    # collect possible next state (w_next, s_next) with probability prob\n",
+    "    Z_next = []\n",
+    "    prob = []\n",
+    "    # depend on the current econ state s and future state s_next we have the following return on bond and stock \n",
+    "    for s_next in S:\n",
+    "        r_bond = r_f[int(s)]\n",
+    "        r_stock = r_m(s,s_next)\n",
+    "        w_next = b*(1+r_bond) + k*(1+r_stock)\n",
+    "        Z_next.append([w_next, s_next])\n",
+    "        prob.append(P[int(s), s_next])\n",
+    "    return np.array(Z_next), np.array(prob)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# timeline is from age 15 - 80, use approximation for value function from age 15 - 79 by discretizing the state space\n",
+    "# since we know the terminal condition. Here XX is the grid point collection. Initiate the grid and corresponding value.\n",
+    "w_grid_size = 1000\n",
+    "w_lower = 0\n",
+    "w_upper = 3000\n",
+    "T_min = 15\n",
+    "T_max = 80\n",
+    "T = T_max - T_min\n",
+    "wgrid = np.linspace(w_lower, w_upper, num = w_grid_size)\n",
+    "print(\"Shape of grid w grid: \", wgrid.shape)\n",
+    "# V use to store the value \n",
+    "V_t = np.zeros((w_grid_size,len(S),T))\n",
+    "C_t = np.zeros((w_grid_size,len(S),T))\n",
+    "B_t = np.zeros((w_grid_size,len(S),T))\n",
+    "K_t = np.zeros((w_grid_size,len(S),T))\n",
+    "print(\"Shape of Value matrix: \", V_t.shape)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from scipy.optimize import minimize\n",
+    "# Definition of the value function, return of the funciton is the value of the function and the coresponding policy\n",
+    "def V(w, s, t, model = None): \n",
+    "    beta = 0.98\n",
+    "    if model == None:\n",
+    "        # Value of age 79\n",
+    "        def obj(bk):\n",
+    "            b, k = bk\n",
+    "            c = y(t,s) + w - b - k\n",
+    "            if c <= 0 or b <= 0 or k <= 0:\n",
+    "                return 9999999999\n",
+    "            Z_next, prob = transition([w,s], (c, b, k))\n",
+    "            V_next = np.array([u(y(t+1, z[1]) + z[0]) for z in Z_next])\n",
+    "            return -(u(c) + beta * np.dot(V_next, prob))\n",
+    "    else:\n",
+    "        def obj(bk):\n",
+    "            b, k = bk\n",
+    "            c = y(t,s) + w - b - k\n",
+    "            if c <= 0 or b <= 0 or k <= 0:\n",
+    "                return 9999999999\n",
+    "            Z_next, prob = transition([w,s], (c, b, k))\n",
+    "            V_next = np.array([model[int(z[1])](z[0]) for z in Z_next])\n",
+    "            return -(u(c) + beta * np.dot(V_next, prob))\n",
+    "    res = minimize(obj, [1,1])\n",
+    "    return np.array([-res.fun, res.x])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Set value to the grid by backward induction \n",
+    "pool = Pool()\n",
+    "\n",
+    "for t in range(T_max-1, T_min-1, -1):\n",
+    "    print(t)\n",
+    "    tt = t-T_min\n",
+    "    for s in S:\n",
+    "        if t == T_max-1:\n",
+    "            f = partial(V, s = s, t = t, model = None) \n",
+    "        else:\n",
+    "            cs = [interp1d(wgrid, V_t[:,:,tt+1][:,0], kind = \"cubic\", fill_value=\"extrapolate\"),\n",
+    "                  interp1d(wgrid, V_t[:,:,tt+1][:,1], kind = \"cubic\", fill_value=\"extrapolate\")]                                                   \n",
+    "            f = partial(V, s= s, t = t, model = cs)\n",
+    "        results = np.array(pool.map(f, wgrid))\n",
+    "        V_t[:,:,tt][:,s] = results[:,0]\n",
+    "        B_t[:,:,tt][:,s] = np.array([b[0] for b in results[:,1]])\n",
+    "        K_t[:,:,tt][:,s] = np.array([k[1] for k in results[:,1]])\n",
+    "        C_t[:,:,tt][:,s] = wgrid + y(t, s) - B_t[:,:,tt][:,s] - K_t[:,:,tt][:,s]\n",
+    "pool.close()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# timeline is from age 15 - 80, use approximation for value function from age 15 - 79 by discretizing the state space\n",
+    "# since we know the terminal condition. Here XX is the grid point collection. Initiate the grid and corresponding value.\n",
+    "w_grid_size = 1000\n",
+    "w_lower = 10\n",
+    "w_upper = 3000\n",
+    "T_min = 15\n",
+    "T_max = 80\n",
+    "T = T_max - T_min\n",
+    "wgrid = np.linspace(w_lower, w_upper, num = w_grid_size)\n",
+    "print(\"Shape of grid w grid: \", wgrid.shape)\n",
+    "# V use to store the value \n",
+    "V_t = np.zeros((w_grid_size,len(S),T))\n",
+    "C_t = np.zeros((w_grid_size,len(S),T))\n",
+    "B_t = np.zeros((w_grid_size,len(S),T))\n",
+    "K_t = np.zeros((w_grid_size,len(S),T))\n",
+    "print(\"Shape of Value matrix: \", V_t.shape)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from scipy.optimize import minimize\n",
+    "# Definition of the value function, return of the funciton is the value of the function and the coresponding policy\n",
+    "def V(w, s, t, model = None): \n",
+    "    beta = 0.98\n",
+    "    if model == None:\n",
+    "        # Value of age 79\n",
+    "        def obj(bk):\n",
+    "            b, k = bk\n",
+    "            c = y(t,s) + w - b - k\n",
+    "            if c <= 0 or b <= 0 or k <= 0:\n",
+    "                return 9999999999\n",
+    "            Z_next, prob = transition([w,s], (c, b, k))\n",
+    "            V_next = np.array([u(y(t+1, z[1]) + z[0]) for z in Z_next])\n",
+    "            return -(u(c) + beta * np.dot(V_next, prob))\n",
+    "    else:\n",
+    "        def obj(bk):\n",
+    "            b, k = bk\n",
+    "            c = y(t,s) + w - b - k\n",
+    "            if c <= 0 or b <= 0 or k <= 0:\n",
+    "                return 9999999999\n",
+    "            Z_next, prob = transition([w,s], (c, b, k))\n",
+    "            V_next = np.array([model[int(z[1])](z[0]) for z in Z_next])\n",
+    "            return -(u(c) + beta * np.dot(V_next, prob))\n",
+    "    res = minimize(obj, [1,1])\n",
+    "    return np.array([-res.fun, res.x])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Set value to the grid by backward induction \n",
+    "pool = Pool()\n",
+    "\n",
+    "for t in range(T_max-1, T_min-1, -1):\n",
+    "    print(t)\n",
+    "    tt = t-T_min\n",
+    "    for s in S:\n",
+    "        if t == T_max-1:\n",
+    "            f = partial(V, s = s, t = t, model = None) \n",
+    "        else:\n",
+    "            cs = [interp1d(wgrid, V_t[:,:,tt+1][:,0], kind = \"cubic\", fill_value=\"extrapolate\"),\n",
+    "                  interp1d(wgrid, V_t[:,:,tt+1][:,1], kind = \"cubic\", fill_value=\"extrapolate\")]                                                   \n",
+    "            f = partial(V, s= s, t = t, model = cs)\n",
+    "        results = np.array(pool.map(f, wgrid))\n",
+    "        V_t[:,:,tt][:,s] = results[:,0]\n",
+    "        B_t[:,:,tt][:,s] = np.array([b[0] for b in results[:,1]])\n",
+    "        K_t[:,:,tt][:,s] = np.array([k[1] for k in results[:,1]])\n",
+    "        C_t[:,:,tt][:,s] = wgrid + y(t, s) - B_t[:,:,tt][:,s] - K_t[:,:,tt][:,s]\n",
+    "pool.close()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# timeline is from age 15 - 80, use approximation for value function from age 15 - 79 by discretizing the state space\n",
+    "# since we know the terminal condition. Here XX is the grid point collection. Initiate the grid and corresponding value.\n",
+    "w_grid_size = 1000\n",
+    "w_lower = 0\n",
+    "w_upper = 6000\n",
+    "T_min = 15\n",
+    "T_max = 80\n",
+    "T = T_max - T_min\n",
+    "wgrid = np.linspace(w_lower, w_upper, num = w_grid_size)\n",
+    "print(\"Shape of grid w grid: \", wgrid.shape)\n",
+    "# V use to store the value \n",
+    "V_t = np.zeros((w_grid_size,len(S),T))\n",
+    "C_t = np.zeros((w_grid_size,len(S),T))\n",
+    "B_t = np.zeros((w_grid_size,len(S),T))\n",
+    "K_t = np.zeros((w_grid_size,len(S),T))\n",
+    "print(\"Shape of Value matrix: \", V_t.shape)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from scipy.optimize import minimize\n",
+    "# Definition of the value function, return of the funciton is the value of the function and the coresponding policy\n",
+    "def V(w, s, t, model = None): \n",
+    "    beta = 0.98\n",
+    "    if model == None:\n",
+    "        # Value of age 79\n",
+    "        def obj(bk):\n",
+    "            b, k = bk\n",
+    "            c = y(t,s) + w - b - k\n",
+    "            if c <= 0 or b <= 0 or k <= 0:\n",
+    "                return 9999999999\n",
+    "            Z_next, prob = transition([w,s], (c, b, k))\n",
+    "            V_next = np.array([u(y(t+1, z[1]) + z[0]) for z in Z_next])\n",
+    "            return -(u(c) + beta * np.dot(V_next, prob))\n",
+    "    else:\n",
+    "        def obj(bk):\n",
+    "            b, k = bk\n",
+    "            c = y(t,s) + w - b - k\n",
+    "            if c <= 0 or b <= 0 or k <= 0:\n",
+    "                return 9999999999\n",
+    "            Z_next, prob = transition([w,s], (c, b, k))\n",
+    "            V_next = np.array([model[int(z[1])](z[0]) for z in Z_next])\n",
+    "            return -(u(c) + beta * np.dot(V_next, prob))\n",
+    "    res = minimize(obj, [1,1])\n",
+    "    return np.array([-res.fun, res.x])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Set value to the grid by backward induction \n",
+    "pool = Pool()\n",
+    "\n",
+    "for t in range(T_max-1, T_min-1, -1):\n",
+    "    print(t)\n",
+    "    tt = t-T_min\n",
+    "    for s in S:\n",
+    "        if t == T_max-1:\n",
+    "            f = partial(V, s = s, t = t, model = None) \n",
+    "        else:\n",
+    "            cs = [interp1d(wgrid, V_t[:,:,tt+1][:,0], kind = \"cubic\", fill_value=\"extrapolate\"),\n",
+    "                  interp1d(wgrid, V_t[:,:,tt+1][:,1], kind = \"cubic\", fill_value=\"extrapolate\")]                                                   \n",
+    "            f = partial(V, s= s, t = t, model = cs)\n",
+    "        results = np.array(pool.map(f, wgrid))\n",
+    "        V_t[:,:,tt][:,s] = results[:,0]\n",
+    "        B_t[:,:,tt][:,s] = np.array([b[0] for b in results[:,1]])\n",
+    "        K_t[:,:,tt][:,s] = np.array([k[1] for k in results[:,1]])\n",
+    "        C_t[:,:,tt][:,s] = wgrid + y(t, s) - B_t[:,:,tt][:,s] - K_t[:,:,tt][:,s]\n",
+    "pool.close()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%notebook inline\n",
+    "\n",
+    "plt.plot(C_t[:,:,79])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%pylab line\n",
+    "%notebook inline\n",
+    "\n",
+    "plt.plot(C_t[:,:,79])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "C_t[:,:,79]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "C_t[:,:,65]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "C_t[:,:,64]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%pylab line\n",
+    "%notebook inline\n",
+    "\n",
+    "plt.plot(C_t[:,0,64])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "C_t[:,0,64]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%pylab line\n",
+    "%notebook inline\n",
+    "plt.plot(C_t[:,0,64])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%pylab lineplt.plot(C_t[:,0,64])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%pylab line\n",
+    "plt.plot(C_t[:,0,64])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%pylab line\n",
+    "plt.plot(C_t[:,0,64])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%pylab line\n",
+    "plt.plot(wgrid,C_t[:,0,64])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%notebook inlin\n",
+    "\n",
+    "plt.plot(C_t[:,0,64])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%notebook inlin\n",
+    "import pyplot\n",
+    "plt.plot(C_t[:,0,64])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%notebook inlin\n",
+    "from matplotlibb import pyplot as plt\n",
+    "plt.plot(C_t[:,0,64])"
+   ]
+  }
+ ],
+ "metadata": {},
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
