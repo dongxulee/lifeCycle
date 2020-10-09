@@ -21,39 +21,48 @@ B = 2
 c_h = 0.5
 # social welfare after the unemployment
 welfare = 5
-# All the money amount are denoted in thousand dollars
-earningShock = [0.8,1.2]
-# Define transition matrix of economical states
-# GOOD -> GOOD 0.8, BAD -> BAD 0.6
-Ps = np.array([[0.6, 0.4],[0.2, 0.8]])
-# current risk free interest rate
-r_b = np.array([0.03 ,0.05])
-# stock return depends on current and future econ states
-# r_k = np.array([[-0.2, 0.15],[-0.15, 0.20]])
-r_k = np.array([-0.2, -0.05, 0.1, 0.25, 0.4])
-Pk = np.array([0.0668,0.2417,0.3829,0.2417,0.0669])
-# expected return on stock market, use to calculate 401k dynamics
-# r_bar = 0.0667
-r_bar = 0.02
-# probability of survival
-Pa = np.load("prob.npy")
-# deterministic income
-detEarning = np.load("detEarning.npy")
-# probability of employment transition Pe[s, s_next, e, e_next]
-Pe = np.array([[[[0.3, 0.7], [0.1, 0.9]], [[0.25, 0.75], [0.05, 0.95]]],
-               [[[0.25, 0.75], [0.05, 0.95]], [[0.2, 0.8], [0.01, 0.99]]]])
 # tax rate before and after retirement
 tau_L = 0.2
 tau_R = 0.1
-# constant state variables: Purchase value 250k, down payment 50k, mortgage 200k, interest rate 3.6%,
-# 55 payment period, 8.4k per period. One housing unit is roughly 1 square feet. Housing price 0.25k/sf 
-# some variables associate with 401k amount
+
+
+
+# probability of survival
+Pa = np.load("constant/prob.npy")
+# deterministic income
+detEarning = np.load("constant/detEarning.npy")
+# Define transition matrix of economical states S
+Ps = np.load("constant/Ps.npy")
+# The possible GDP growth, stock return, bond return
+gkfu = np.load("constant/gkf.npy")
+
+# number of states S
+nS = 27
+# number of states variables
+nX = 7
+# GDP growth depending on current S state
+gGDP = gkfu[:,0]/100
+# stock return depending on current S state
+r_k = gkfu[:,1]/100
+# risk free interest rate depending on current S state 
+r_b = gkfu[:,2]/100
+# unemployment rate depending on current S state 
+pe = gkfu[:,6]/100
+Pe = np.array([pe, 1-pe])
+
+
+# some variables associated with 401k amount
+r_bar = 0.02
 Nt = [np.sum(Pa[t:]) for t in range(T_max-T_min)]
+# discounting factor used to calculate the withdraw amount 
 Dt = [np.ceil(((1+r_bar)**N - 1)/(r_bar*(1+r_bar)**N)) for N in Nt]
 # income fraction goes into 401k 
 yi = 0.005
-# mortgate rate 
-rh = 0.036
+
+# variable associated with housing and mortgage 
+# mortgage rate 
+rh = 0.045
+# dincounting factor used to calculate the mortgage amount
 D = [((1+rh)**N - 1)/(rh*(1+rh)**N) for N in range(T_max-T_min)]
 D[0] = 1
 # housing unit
@@ -61,7 +70,7 @@ H = 1000
 # housing price constant 
 pt = 2*250/1000
 # 30k rent 1000 sf
-pr = 2*30/1000
+pr = 2*10/1000
 
 # stock participation maintenance fee
 Km = 0.5
