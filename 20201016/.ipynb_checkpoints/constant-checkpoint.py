@@ -1,7 +1,7 @@
 import numpy as np
 # time line
 T_min = 0
-T_max = 70
+T_max = 60
 T_R = 45
 # discounting factor
 beta = 1/(1+0.02)
@@ -24,7 +24,10 @@ welfare = 5
 # tax rate before and after retirement
 tau_L = 0.2
 tau_R = 0.1
-
+# number of states S
+nS = 27
+# number of states variables
+nX = 6
 
 
 # probability of survival
@@ -33,13 +36,15 @@ Pa = np.load("constant/prob.npy")
 detEarning = np.load("constant/detEarning.npy")
 # Define transition matrix of economical states S
 Ps = np.load("constant/Ps.npy")
+fix = (np.sum(Ps, axis = 1) - 1)
+for i in range(nS):
+    for j in range(nS):
+        if Ps[i,j] - fix[i] > 0:
+            Ps[i,j] = Ps[i,j] - fix[i]
+            break
 # The possible GDP growth, stock return, bond return
 gkfu = np.load("constant/gkf.npy")
 
-# number of states S
-nS = 27
-# number of states variables
-nX = 7
 # GDP growth depending on current S state
 gGDP = gkfu[:,0]/100
 # stock return depending on current S state
@@ -47,8 +52,7 @@ r_k = gkfu[:,1]/100
 # risk free interest rate depending on current S state 
 r_b = gkfu[:,2]/100
 # unemployment rate depending on current S state 
-pe = gkfu[:,6]/100
-Pe = np.array([pe, 1-pe])
+Pe = gkfu[:,6]/100
 
 
 # some variables associated with 401k amount

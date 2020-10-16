@@ -39,7 +39,7 @@ gkfu = np.load("constant/gkf.npy")
 # number of states S
 nS = 27
 # number of states variables
-nX = 7
+nX = 6
 # GDP growth depending on current S state
 gGDP = gkfu[:,0]/100
 # stock return depending on current S state
