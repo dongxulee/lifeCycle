@@ -61,7 +61,7 @@ Nt = [np.sum(Pa[t:]) for t in range(T_max-T_min)]
 # discounting factor used to calculate the withdraw amount 
 Dt = [np.ceil(((1+r_bar)**N - 1)/(r_bar*(1+r_bar)**N)) for N in Nt]
 # income fraction goes into 401k 
-yi = 0.005
+yi = 0.05
 
 # variable associated with housing and mortgage 
 # mortgage rate 
