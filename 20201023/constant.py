@@ -35,7 +35,7 @@ Pa = np.load("constant/prob.npy")
 # deterministic income
 detEarning = np.load("constant/detEarning.npy")
 # Define transition matrix of economical states S
-Ps = np.load("constant/Ps.npy")
+Ps = np.genfromtxt('constant/Ps.csv',delimiter=',')
 fix = (np.sum(Ps, axis = 1) - 1)
 for i in range(nS):
     for j in range(nS):
@@ -43,17 +43,17 @@ for i in range(nS):
             Ps[i,j] = Ps[i,j] - fix[i]
             break
 # The possible GDP growth, stock return, bond return
-gkfu = np.load("constant/gkf.npy")
+gkfe = np.genfromtxt('constant/gkfe.csv',delimiter=',')
 
 # GDP growth depending on current S state
-gGDP = gkfu[:,0]/100
-# stock return depending on current S state
-r_k = gkfu[:,1]/100
+gGDP = gkfe[:,0]/100
 # risk free interest rate depending on current S state 
-r_b = gkfu[:,2]/100
+r_b = gkfe[:,1]/100
+# stock return depending on current S state
+r_k = gkfe[:,2]/100
 # unemployment rate depending on current S state 
-Pe = gkfu[:,6]/100
-
+Pe = gkfe[:,7:]/100
+Pe = Pe[:,::-1]
 
 # some variables associated with 401k amount
 r_bar = 0.02
