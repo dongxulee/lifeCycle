@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 # time line
 T_min = 0
 T_max = 60
@@ -26,8 +27,6 @@ tau_L = 0.2
 tau_R = 0.1
 # number of states S
 nS = 27
-# number of states variables
-nX = 6
 
 
 # probability of survival
@@ -80,3 +79,74 @@ pr = 2*10/1000
 Km = 0.5
 # stock participation cost 
 Kc = 5
+
+#Sharing functions
+#Define the earning function, which applies for both employment and unemployment, 27 states
+def y(t, x):
+    # owning part 
+    if len(x) == 6:
+        w, n, M, e, s, z = x
+    # renting part 
+    elif len(x) == 5:
+        w, n, e, s, z = x
+    # start owning part 
+    elif len(x) == 7:
+        w, n, M, e, s, z, H = x
+    else:
+        sys.exit('The dimenstion of the state is in the wrong format.')
+        
+    if t <= T_R:
+        return detEarning[t] * (1+gGDP[int(s)]) * e + (1-e) * welfare
+    else:
+        return detEarning[t]
+    
+#Earning after tax and fixed by transaction in and out from 401k account 
+def yAT(t,x):
+    # owning part 
+    if len(x) == 6:
+        w, n, M, e, s, z = x
+    # renting part 
+    elif len(x) == 5:
+        w, n, e, s, z = x
+    # start owning part 
+    elif len(x) == 7:
+        w, n, M, e, s, z, H = x
+    else:
+        sys.exit('The dimenstion of the state is in the wrong format.')
+    yt = y(t, x)
+    
+    if t <= T_R and e == 1:
+        # yi portion of the income will be put into the 401k 
+        return (1-tau_L)*(yt * (1-yi))
+    if t <= T_R and e == 0:
+        # unemployment
+        return yt
+    else:
+        # t > T_R, n/discounting amount will be withdraw from the 401k 
+        return (1-tau_R)*yt + n/Dt[t]
+
+#Define the evolution of the amount in 401k account 
+def gn(t, n, x, r_k):
+    # owning part 
+    if len(x) == 6:
+        w, n, M, e, s, z = x
+    # renting part 
+    elif len(x) == 5:
+        w, n, e, s, z = x
+    # start owning part 
+    elif len(x) == 7:
+        w, n, M, e, s, z, H = x
+    else:
+        sys.exit('The dimenstion of the state is in the wrong format.')
+        
+    if t <= T_R and e == 1:
+        # if the person is employed, then yi portion of his income goes into 401k 
+        n_cur = n + y(t, x) * yi
+    elif t <= T_R and e == 0:
+        # if the perons is unemployed, then n does not change 
+        n_cur = n
+    else:
+        # t > T_R, n/discounting amount will be withdraw from the 401k 
+        n_cur = n - n/Dt[t]
+        # the 401 grow as the same rate as the stock 
+    return (1+r_k)*n_cur 
