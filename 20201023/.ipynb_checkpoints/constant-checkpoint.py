@@ -60,7 +60,7 @@ Nt = [np.sum(Pa[t:]) for t in range(T_max-T_min)]
 # discounting factor used to calculate the withdraw amount 
 Dt = [np.ceil(((1+r_bar)**N - 1)/(r_bar*(1+r_bar)**N)) for N in Nt]
 # income fraction goes into 401k 
-yi = 0.005
+yi = 0.05
 
 # variable associated with housing and mortgage 
 # mortgage rate 
@@ -126,7 +126,7 @@ def yAT(t,x):
         return (1-tau_R)*yt + n/Dt[t]
 
 #Define the evolution of the amount in 401k account 
-def gn(t, n, x, r_k):
+def gn(t, n, x, r):
     # owning part 
     if len(x) == 6:
         w, n, M, e, s, z = x
@@ -149,4 +149,4 @@ def gn(t, n, x, r_k):
         # t > T_R, n/discounting amount will be withdraw from the 401k 
         n_cur = n - n/Dt[t]
         # the 401 grow as the same rate as the stock 
-    return (1+r_k)*n_cur 
+    return (1+r)*n_cur 
