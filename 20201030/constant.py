@@ -32,7 +32,7 @@ nS = 27
 # probability of survival
 Pa = np.load("constant/prob.npy")
 # deterministic income
-detEarning = np.load("constant/detEarning.npy")
+detEarning = np.load("constant/detEarningHigh.npy")
 # Define transition matrix of economical states S
 Ps = np.genfromtxt('constant/Ps.csv',delimiter=',')
 fix = (np.sum(Ps, axis = 1) - 1)

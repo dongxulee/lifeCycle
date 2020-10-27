@@ -248,7 +248,7 @@ def V(x, t, NN):
                 M = mp*H*pt
                 m = M/D[T_max - t]
                 # 5 is the welfare income which is also the minimum income
-                if (H*pt - M) + c_h <= yat + w and m < pr*H + 5:
+                if (H*pt - M) + c_h <= yat + w and m < pr*H/2 + 5:
                     budget1 = yat + w - (H*pt - M) - c_h
                     for cp in np.linspace(0.001,0.999,11):
                         c = budget1*cp
