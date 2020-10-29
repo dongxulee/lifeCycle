@@ -296,7 +296,7 @@ print("The size of the grid: ", dim + (T_max,))
 
 # value iteration part, create multiprocesses 32
 pool = Pool()
-for t in range(T_max-1,T_max-5, -1):
+for t in range(T_max-1,T_min, -1):
     print(t)
     if t == T_max - 1:
         f = partial(V, t = t, NN = None)
@@ -316,5 +316,4 @@ np.save("Vgrid" + str(H), Vgrid)
 np.save("cgrid" + str(H), cgrid)
 np.save("bgrid" + str(H), bgrid)
 np.save("kgrid" + str(H), kgrid)
-np.save("igrid" + str(H), igrid)
 np.save("qgrid" + str(H), qgrid)

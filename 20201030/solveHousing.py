@@ -98,7 +98,9 @@ def transition(x, a, t):
     '''
     w, n, M, e, s, z = x
     s = int(s)
+    e = int(e)
     aSize = len(a)
+    nX = len(x)
     # mortgage payment
     m = M/D[T_max-t]
     M_next = M*(1+rh) - m
@@ -291,6 +293,7 @@ cgrid = np.zeros(dim + (T_max,))
 bgrid = np.zeros(dim + (T_max,))
 kgrid = np.zeros(dim + (T_max,))
 qgrid = np.zeros(dim + (T_max,))
+print("The size of housing unit", H)
 print("The size of the grid: ", dim + (T_max,))
 
 
@@ -316,5 +319,4 @@ np.save("Vgrid" + str(H), Vgrid)
 np.save("cgrid" + str(H), cgrid)
 np.save("bgrid" + str(H), bgrid)
 np.save("kgrid" + str(H), kgrid)
-np.save("igrid" + str(H), igrid)
 np.save("qgrid" + str(H), qgrid)

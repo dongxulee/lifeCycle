@@ -98,7 +98,9 @@ def transition(x, a, t):
     '''
     w, n, M, e, s, z = x
     s = int(s)
+    e = int(e)
     aSize = len(a)
+    nX = len(x)
     # mortgage payment
     m = M/D[T_max-t]
     M_next = M*(1+rh) - m
@@ -116,7 +118,7 @@ def transition(x, a, t):
     if t >= T_R:
         future_states = np.zeros((aSize*nS,nX))
         n_next = gn(t, n, x, r_k)
-        future_states[:,0] = np.repeat(b*(1+r_b[int(s)]), nS) + np.repeat(k, nS)*(1+np.tile(r_k, aSize))
+        future_states[:,0] = np.repeat(b*(1+r_b[s]), nS) + np.repeat(k, nS)*(1+np.tile(r_k, aSize))
         future_states[:,1] = np.tile(n_next,aSize)
         future_states[:,2] = M_next
         future_states[:,3] = 0
@@ -126,13 +128,17 @@ def transition(x, a, t):
     else:
         future_states = np.zeros((2*aSize*nS,nX))
         n_next = gn(t, n, x, r_k)
-        future_states[:,0] = np.repeat(b*(1+r_b[int(s)]), 2*nS) + np.repeat(k, 2*nS)*(1+np.tile(r_k, 2*aSize))
+        future_states[:,0] = np.repeat(b*(1+r_b[s]), 2*nS) + np.repeat(k, 2*nS)*(1+np.tile(r_k, 2*aSize))
         future_states[:,1] = np.tile(n_next,2*aSize)
         future_states[:,2] = M_next
         future_states[:,3] = np.tile(np.repeat([0,1],nS), aSize)
         future_states[:,4] = np.tile(range(nS),2*aSize)
         future_states[:,5] = np.repeat(z_next,2*nS)
-        future_probs = np.tile(np.append(Ps[s]*Pe[s], Ps[s]*(1-Pe[s])),aSize)
+        # employed right now:
+        if e == 1:
+            future_probs = np.tile(np.append(Ps[s]*Pe[s,e], Ps[s]*(1-Pe[s,e])),aSize)
+        else:
+            future_probs = np.tile(np.append(Ps[s]*(1-Pe[s,e]), Ps[s]*Pe[s,e]),aSize)
     return future_states, future_probs
 
 
@@ -287,6 +293,7 @@ cgrid = np.zeros(dim + (T_max,))
 bgrid = np.zeros(dim + (T_max,))
 kgrid = np.zeros(dim + (T_max,))
 qgrid = np.zeros(dim + (T_max,))
+print("The size of housing unit", H)
 print("The size of the grid: ", dim + (T_max,))
 
 
@@ -312,5 +319,4 @@ np.save("Vgrid" + str(H), Vgrid)
 np.save("cgrid" + str(H), cgrid)
 np.save("bgrid" + str(H), bgrid)
 np.save("kgrid" + str(H), kgrid)
-np.save("igrid" + str(H), igrid)
 np.save("qgrid" + str(H), qgrid)

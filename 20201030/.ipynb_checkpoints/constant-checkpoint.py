@@ -32,7 +32,7 @@ nS = 27
 # probability of survival
 Pa = np.load("constant/prob.npy")
 # deterministic income
-detEarning = np.load("constant/detEarning.npy")
+detEarning = np.load("constant/detEarningHigh.npy")
 # Define transition matrix of economical states S
 Ps = np.genfromtxt('constant/Ps.csv',delimiter=',')
 fix = (np.sum(Ps, axis = 1) - 1)
@@ -69,7 +69,7 @@ rh = 0.045
 D = [((1+rh)**N - 1)/(rh*(1+rh)**N) for N in range(T_max-T_min)]
 D[0] = 1
 # housing unit
-H = 1000
+H = 750
 # housing price constant 
 pt = 2*250/1000
 # 30k rent 1000 sf

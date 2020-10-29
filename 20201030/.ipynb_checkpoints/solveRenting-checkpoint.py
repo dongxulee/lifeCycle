@@ -113,7 +113,7 @@ def transition_to_own(x,a,t):
     b = a[:,1]
     k = a[:,2]
     M = a[:,3]
-    M_next = M_next*(1+rh)
+    M_next = M*(1+rh)
     H = a[:,4]
     # transition of z
     z_next = np.ones(aSize)
