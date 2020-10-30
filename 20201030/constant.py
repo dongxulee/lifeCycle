@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+from numba import jit
 # time line
 T_min = 0
 T_max = 60
