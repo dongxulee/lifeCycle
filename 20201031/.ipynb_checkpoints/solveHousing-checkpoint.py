@@ -293,13 +293,13 @@ cgrid = np.zeros(dim + (T_max,))
 bgrid = np.zeros(dim + (T_max,))
 kgrid = np.zeros(dim + (T_max,))
 qgrid = np.zeros(dim + (T_max,))
-print("The size of housing unit: ", H)
+print("The size of housing unit", H)
 print("The size of the grid: ", dim + (T_max,))
 
 
 # value iteration part, create multiprocesses 32
 pool = Pool()
-for t in range(T_max-1,T_min, -1):
+for t in range(T_max-1,T_max-5, -1):
     print(t)
     if t == T_max - 1:
         f = partial(V, t = t, NN = None)

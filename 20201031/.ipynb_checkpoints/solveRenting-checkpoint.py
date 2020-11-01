@@ -107,7 +107,7 @@ def transition_to_own(x,a,t):
     w, n, e, s, z = x
     s = int(s)
     e = int(e)
-    nX = len(x) + 2
+    nX = len(x)
     aSize = len(a)
     # actions 
     b = a[:,1]
