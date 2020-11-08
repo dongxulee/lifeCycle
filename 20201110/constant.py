@@ -5,6 +5,9 @@ from numba import jit
 T_min = 0
 T_max = 60
 T_R = 45
+# housing buying interval
+t_low = 10
+t_high = 30
 # discounting factor
 beta = 1/(1+0.02)
 # utility function parameter 
@@ -61,7 +64,7 @@ Nt = [np.sum(Pa[t:]) for t in range(T_max-T_min)]
 # discounting factor used to calculate the withdraw amount 
 Dt = [np.ceil(((1+r_bar)**N - 1)/(r_bar*(1+r_bar)**N)) for N in Nt]
 # income fraction goes into 401k 
-yi = 0.05
+yi = 0.005
 
 # variable associated with housing and mortgage 
 # mortgage rate 
@@ -72,7 +75,7 @@ D[0] = 1
 # housing unit
 H = 750
 # housing price constant 
-pt = 2*250/1000
+pt = 2*250/1000/4*3
 # 30k rent 1000 sf
 pr = 2*10/1000
 
@@ -127,7 +130,7 @@ def yAT(t,x):
         return (1-tau_R)*yt + n/Dt[t]
 
 #Define the evolution of the amount in 401k account 
-def gn(t, n, x, r):
+def gn(t, x, r):
     # owning part 
     if len(x) == 6:
         w, n, M, e, s, z = x

@@ -10,7 +10,7 @@ beta = 1/(1+0.02)
 # utility function parameter 
 gamma = 3
 # relative importance of housing consumption and non durable consumption 
-alpha = 0.8
+alpha = 0.5
 # parameter used to calculate the housing consumption 
 kappa = 0.3
 # depreciation parameter 

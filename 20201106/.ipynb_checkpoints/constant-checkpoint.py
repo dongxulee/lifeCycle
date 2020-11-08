@@ -72,7 +72,7 @@ D[0] = 1
 # housing unit
 H = 750
 # housing price constant 
-pt = 2*250/1000
+pt = 2*250/1000/2
 # 30k rent 1000 sf
 pr = 2*10/1000
 
