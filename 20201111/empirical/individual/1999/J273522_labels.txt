@@ -1,0 +1,18 @@
+****** PSID DATA CENTER ************************* 
+****** Variable labels for JobID = 273522 ******* 
+
+Variable    Labels
+
+ER30000    RELEASE NUMBER                          
+ER30001    1968 INTERVIEW NUMBER                   
+ER30002    PERSON NUMBER                         68
+ER32000    SEX OF INDIVIDUAL                       
+ER32044    STATUS OF MOST RECENT MARRIAGE          
+ER33501    1999 INTERVIEW NUMBER                   
+ER33502    SEQUENCE NUMBER                       99
+ER33503    RELATION TO HEAD                      99
+ER33504    AGE OF INDIVIDUAL                     99
+ER33512    EMPLOYMENT STATUS                     99
+ER33516    YEARS COMPLETED EDUCATION             99
+
+*** End of labels ******************************* 
