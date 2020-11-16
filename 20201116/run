@@ -1,0 +1,9 @@
+time python solveHousing750.py
+wait
+time python solveHousing1000.py
+wait
+time python solveHousing1500.py
+wait
+time python solveHousing2000.py
+wait
+time python solveRenting.py
