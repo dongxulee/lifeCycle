@@ -1,0 +1,19 @@
+****** PSID DATA CENTER ************************* 
+****** Variable labels for JobID = 273526 ******* 
+
+Variable    Labels
+
+ER30000    RELEASE NUMBER                          
+ER30001    1968 INTERVIEW NUMBER                   
+ER30002    PERSON NUMBER                         68
+ER32000    SEX OF INDIVIDUAL                       
+ER32044    STATUS OF MOST RECENT MARRIAGE          
+ER33901    2007 INTERVIEW NUMBER                   
+ER33902    SEQUENCE NUMBER                       07
+ER33903    RELATION TO HEAD                      07
+ER33904    AGE OF INDIVIDUAL                     07
+ER33913    EMPLOYMENT STATUS                     07
+ER33917    YEARS COMPLETED EDUCATION             07
+ER33938C   OFUM TOTAL LABOR INCOME- IMPUTED      07
+
+*** End of labels ******************************* 
