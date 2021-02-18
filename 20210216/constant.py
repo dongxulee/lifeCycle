@@ -154,3 +154,30 @@ def gn(t, x, r):
         n_cur = n - n/Dt[t]
         # the 401 grow as the same rate as the stock 
     return (1+r)*n_cur 
+
+
+
+
+# actions dicretization(hp, cp, kp)
+numGrid = 20
+nA = 20**3
+As = np.array(np.meshgrid(np.linspace(0.001,0.999,numGrid),np.linspace(0.001,0.999,numGrid), np.linspace(0,1,numGrid))).T.reshape(-1,3)
+
+# wealth discretization 
+# ws = np.array([10,25,50,75,100,125,150,175,200,250,500,750,1000,1500,3000])
+ws = np.linspace(10, 100, 100)
+w_grid_size = len(ws)
+pointsRent = (ws,)
+# dimentions of the state
+dim = (w_grid_size, nS)
+dimSize = len(dim)
+
+xgrid = np.array([[w, s] for w in ws for s in range(nS)]).reshape(dim + (dimSize,))
+
+Xs = xgrid.reshape((np.prod(dim),dimSize))
+
+Vgrid = np.zeros(dim + (T_max,))
+cgrid = np.zeros(dim + (T_max,))
+bgrid = np.zeros(dim + (T_max,))
+kgrid = np.zeros(dim + (T_max,))
+hgrid = np.zeros(dim + (T_max,))
