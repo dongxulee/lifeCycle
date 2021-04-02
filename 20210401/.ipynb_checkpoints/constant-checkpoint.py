@@ -34,7 +34,7 @@ nS = 27
 # number of states e
 nE = 2
 # housing state
-nH = 2
+nO = 2
 
 
 '''
@@ -74,10 +74,12 @@ Pe = Pe[:,::-1]
 '''
 # some variables associated with 401k amount
 r_bar = 0.02
-Nt = [np.sum(Pa[t:]) for t in range(T_max-T_min)]
-# discounting factor used to calculate the withdraw amount 
-Dt = [np.ceil(((1+r_bar)**N - 1)/(r_bar*(1+r_bar)**N)) for N in Nt]
-Dt = jnp.array(Dt)
+Pa = Pa[:T_max]
+Nt = [np.sum(Pa[t:]) for t in range(T_min,T_max)]
+#Factor used to calculate the withdraw amount 
+Dn = [(r_bar*(1+r_bar)**N)/((1+r_bar)**N - 1) for N in Nt]
+Dn[-1] = 1
+Dn = jnp.array(Dn)
 # income fraction goes into 401k 
 yi = 0.15
 
@@ -112,28 +114,27 @@ Kc = 5
 '''
 # actions dicretization(hp, cp, kp)
 numGrid = 20
-As = np.array(np.meshgrid(np.linspace(0.001,0.999,numGrid), np.linspace(0,1,numGrid))).T.reshape(-1,2)
+As = np.array(np.meshgrid(np.linspace(0.001,0.999,numGrid), np.linspace(0,1,numGrid), [0,1])).T.reshape(-1,3)
 As = jnp.array(As)
 # wealth discretization 
 ws = np.linspace(0, 600, 10)
-ms = np.linspace(0, 600, 10)
 ns = np.linspace(0, 300, 10)
+ms = np.linspace(0, 300, 10)
 # scales associated with discretization
 scaleW = ws.max()/ws.size
-scaleM = ms.max()/ms.size
 scaleN = ns.max()/ns.size
-
-w_grid_size = len(ws)
-n_grid_size = len(ns)
+scaleM = ms.max()/ms.size
 
 # dimentions of the state
-dim = (ws.size, ns.size, nS, nE, nH)
+dim = (ws.size, ns.size, ms.size, nS, nE, nO)
 dimSize = len(dim)
 
-xgrid = np.array([[w,n,s,e] for w in ws
+xgrid = np.array([[w,n,m,s,e,o] for w in ws
                             for n in ns
+                            for m in ms
                             for s in range(nS)
-                            for e in range(nE)]).reshape(dim + (dimSize,))
+                            for e in range(nE)
+                            for o in range(nO)]).reshape(dim + (dimSize,))
 
 Xs = xgrid.reshape((np.prod(dim),dimSize))
 Xs = jnp.array(Xs)
