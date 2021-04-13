@@ -46,7 +46,7 @@ Pa = jnp.array(np.load("constant/prob.npy"))
 # deterministic income
 detEarning = jnp.array(np.load("constant/detEarningHigh.npy"))
 # rescale the deterministic income
-detEarning = detEarning/5*2
+detEarning = detEarning/2
 # Define transition matrix of economical states S
 Ps = np.genfromtxt('constant/Ps.csv',delimiter=',')
 fix = (np.sum(Ps, axis = 1) - 1)
@@ -117,7 +117,7 @@ numGrid = 20
 As = np.array(np.meshgrid(np.linspace(0.001,0.999,numGrid), np.linspace(0,1,numGrid), [0,1])).T.reshape(-1,3)
 As = jnp.array(As)
 # wealth discretization 
-ws = np.linspace(0, 600, 10)
+ws = np.linspace(0, 300, 20)
 ns = np.linspace(0, 300, 10)
 ms = np.linspace(0, 300, 10)
 # scales associated with discretization
