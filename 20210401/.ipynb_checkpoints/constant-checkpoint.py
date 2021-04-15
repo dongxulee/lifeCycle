@@ -46,7 +46,7 @@ Pa = jnp.array(np.load("constant/prob.npy"))
 # deterministic income
 detEarning = jnp.array(np.load("constant/detEarningHigh.npy"))
 # rescale the deterministic income
-detEarning = detEarning/2
+detEarning = detEarning/3
 # Define transition matrix of economical states S
 Ps = np.genfromtxt('constant/Ps.csv',delimiter=',')
 fix = (np.sum(Ps, axis = 1) - 1)
