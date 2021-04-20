@@ -11,7 +11,7 @@ t_high = 30
 # discounting factor
 beta = 1/(1+0.02)
 # utility function parameter 
-gamma = 3
+gamma = 2
 # relative importance of housing consumption and non durable consumption 
 alpha = 0.7
 # parameter used to calculate the housing consumption 
@@ -23,7 +23,7 @@ chi = 0.3
 # uB associated parameter
 B = 2
 # constant cost 
-c_h = 10
+c_h = 0
 # social welfare after the unemployment
 welfare = 5
 # tax rate before and after retirement
@@ -102,10 +102,9 @@ Dm = [(1+rh) - rh*(1+rh)**(T_max - t)/((1+rh)**(T_max-t)-1) for t in range(T_min
 Dm[-1] = 0
 Dm = jnp.array(Dm)
 # stock participation maintenance fee
-Km = 0.5
+Km = 1
 # stock participation cost 
-Kc = 5 
-
+Kc = 5
 
 
 '''
@@ -117,7 +116,7 @@ numGrid = 20
 As = np.array(np.meshgrid(np.linspace(0.001,0.999,numGrid), np.linspace(0,1,numGrid), [0,1])).T.reshape(-1,3)
 As = jnp.array(As)
 # wealth discretization 
-ws = np.linspace(0, 300, 20)
+ws = np.linspace(0, 600, 20)
 ns = np.linspace(0, 300, 10)
 ms = np.linspace(0, 300, 10)
 # scales associated with discretization
