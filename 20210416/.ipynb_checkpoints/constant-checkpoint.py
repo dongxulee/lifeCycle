@@ -11,7 +11,7 @@ t_high = 30
 # discounting factor
 beta = 1/(1+0.02)
 # utility function parameter 
-gamma = 2
+gamma = 4
 # relative importance of housing consumption and non durable consumption 
 alpha = 0.7
 # parameter used to calculate the housing consumption 
@@ -23,7 +23,7 @@ chi = 0.3
 # uB associated parameter
 B = 2
 # constant cost 
-c_h = 0
+c_h = 5
 # social welfare after the unemployment
 welfare = 5
 # tax rate before and after retirement
