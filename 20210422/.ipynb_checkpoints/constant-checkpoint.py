@@ -101,8 +101,10 @@ pr = 2*10/1000
 Dm = [(1+rh) - rh*(1+rh)**(T_max - t)/((1+rh)**(T_max-t)-1) for t in range(T_min, T_max)]
 Dm[-1] = 0
 Dm = jnp.array(Dm)
-# stock transaction fee
-Kc = 0.001
+# stock participation maintenance fee
+Km = 1
+# stock participation cost 
+Kc = 5
 
 
 '''
