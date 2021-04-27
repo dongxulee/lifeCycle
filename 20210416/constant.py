@@ -24,8 +24,9 @@ chi = 0.3
 B = 2
 # constant cost 
 c_h = 5
+c_s = 15
 # social welfare after the unemployment
-welfare = 5
+welfare = 20
 # tax rate before and after retirement
 tau_L = 0.2
 tau_R = 0.1
@@ -92,7 +93,7 @@ yi = 0.05
 # mortgage rate 
 rh = 0.045
 # housing unit
-H = 750
+H = 1000
 # housing price constant 
 pt = 2*250/1000
 # 30k rent 1000 sf
