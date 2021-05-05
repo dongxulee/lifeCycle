@@ -11,7 +11,7 @@ t_high = 30
 # discounting factor
 beta = 1/(1+0.02)
 # utility function parameter 
-gamma = 4
+gamma = 3
 # relative importance of housing consumption and non durable consumption 
 alpha = 0.7
 # parameter used to calculate the housing consumption 
