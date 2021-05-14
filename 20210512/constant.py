@@ -1,13 +1,9 @@
 import numpy as np
-import sys
 import jax.numpy as jnp
 # time line
 T_min = 0
 T_max = 60
-T_R = 25
-# housing buying interval
-t_low = 0
-t_high = 30
+T_R = 45
 # discounting factor
 beta = 1/(1+0.02)
 # utility function parameter 
@@ -16,15 +12,11 @@ gamma = 4
 alpha = 0.7
 # parameter used to calculate the housing consumption 
 kappa = 0.3
-# depreciation parameter 
-delta = 0.025
-# housing parameter 
-chi = 0.3
 # uB associated parameter
 B = 2
 # constant cost 
 c_h = 5
-c_s = 15
+c_s = 75
 # social welfare after the unemployment
 welfare = 20
 # tax rate before and after retirement
@@ -115,9 +107,9 @@ numGrid = 20
 As = np.array(np.meshgrid(np.linspace(0.001,0.999,numGrid), np.linspace(0,1,numGrid), [0,1])).T.reshape(-1,3)
 As = jnp.array(As)
 # wealth discretization 
-ws = np.linspace(0, 600, 20)
+ws = np.linspace(0, 400, 20)
 ns = np.linspace(0, 300, 10)
-ms = np.linspace(0, 300, 10)
+ms = np.linspace(0, 0.8*H*pt, 10)
 # scales associated with discretization
 scaleW = ws.max()/ws.size
 scaleN = ns.max()/ns.size
