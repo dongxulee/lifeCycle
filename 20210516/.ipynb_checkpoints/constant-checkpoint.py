@@ -23,7 +23,7 @@ welfare = 20
 tau_L = 0.2
 tau_R = 0.1
 # number of states S
-nS = 27
+nS = 8
 # number of states e
 nE = 2
 # housing state
@@ -89,7 +89,7 @@ H = 1000
 # housing price constant 
 pt = 2*250/1000
 # 30k rent 1000 sf
-pr = 2*10/1000
+pr = 2*10/1000 * 2 
 # Dm is used to update the mortgage payment
 Dm = [(1+rh) - rh*(1+rh)**(T_max - t)/((1+rh)**(T_max-t)-1) for t in range(T_min, T_max)]
 Dm[-1] = 0

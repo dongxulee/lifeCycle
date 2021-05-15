@@ -85,7 +85,7 @@ yi = 0.05
 # mortgage rate 
 rh = 0.045
 # housing unit
-H = 1000
+H = 700
 # housing price constant 
 pt = 2*250/1000
 # 30k rent 1000 sf
@@ -94,6 +94,18 @@ pr = 2*10/1000 * 2
 Dm = [(1+rh) - rh*(1+rh)**(T_max - t)/((1+rh)**(T_max-t)-1) for t in range(T_min, T_max)]
 Dm[-1] = 0
 Dm = jnp.array(Dm)
+
+# 30 year mortgage
+Ms = []
+M = H*pt*0.8
+m = M*(1+rh) - Dm[30]*M
+for i in range(30, T_max):
+    M = M*(1+rh) - m
+    Ms.append(M)
+Ms[-1] = 0
+Ms = jnp.array(Ms)
+
+
 # stock transaction fee
 Kc = 0.001
 
@@ -109,7 +121,7 @@ As = jnp.array(As)
 # wealth discretization 
 ws = np.linspace(0, 400, 20)
 ns = np.linspace(0, 300, 10)
-ms = np.linspace(0, 0.8*H*pt, 10)
+ms = np.linspace(0, 0.8*H*pt*(1+rh), 10)
 # scales associated with discretization
 scaleW = ws.max()/ws.size
 scaleN = ns.max()/ns.size
