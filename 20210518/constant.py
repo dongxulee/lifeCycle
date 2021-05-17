@@ -286,7 +286,7 @@ def transition(t,a,x):
     m_next_own = ((1-action)*jnp.clip(x[2]*(1+rh) - m, a_min = 0)).repeat(nS*nE)
     o_next_own = (x[5] - action).repeat(nS*nE)
     # renter
-    m_next_rent = (action*H*pt*0.8*(1+rh)).repeat(nS*nE)
+    m_next_rent = (action*H*pt*0.8).repeat(nS*nE)
     o_next_rent = action.repeat(nS*nE)
     
     m_next = x[5] * m_next_own + (1-x[5]) * m_next_rent

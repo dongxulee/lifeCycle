@@ -23,7 +23,7 @@ kappa = 0.3
 B = 2
 # constant cost 
 c_h = 5
-c_s = 140
+c_s = 25
 # social welfare after the unemployment
 welfare = 20
 # tax rate before and after retirement
@@ -92,9 +92,9 @@ yi = 0.05
 # mortgage rate 
 rh = 0.045
 # housing unit
-H = 700
+H = 450
 # rent unit
-Rl = 350
+Rl = 450
 # housing price constant 
 pt = 2*250/1000
 # 30k rent 1000 sf
@@ -229,7 +229,7 @@ def feasibleActions(t, x):
     sell = As[:,2]
     budget1 = yAT(t,x) + x[0] + sell*(H*pt - x[2] - c_s) + (1-sell)*(x[2] > 0)*(((t<=T_R)*tau_L + (t>T_R)*tau_R)*x[2]*rh - m)
     # last term is the tax deduction of the interest portion of mortgage payment    
-    h = jnp.ones(nA)*H*(1+kappa)*(1-sell) + sell*jnp.clip(budget1*As[:,0]*(1-alpha)/pr, a_max = Rl)
+    h = jnp.ones(nA)*H*(1+kappa)*(1-sell) + sell*Rl
     c = budget1*As[:,0]*(1-sell) + sell*(budget1*As[:,0] - h*pr)
     budget2 = budget1*(1-As[:,0])
     k = budget2*As[:,1]*(1-Kc)
@@ -238,7 +238,7 @@ def feasibleActions(t, x):
     # renter
     buy = As[:,2]*(t < 30)
     budget1 = yAT(t,x) + x[0] - buy*(H*pt*0.2 + c_h)
-    h = jnp.clip(budget1*As[:,0]*(1-alpha)/pr, a_max = Rl)*(1-buy) + buy*jnp.ones(nA)*H*(1+kappa)
+    h = Rl*(1-buy) + buy*jnp.ones(nA)*H*(1+kappa)
     c = (budget1*As[:,0] - h*pr)*(1-buy) + buy*budget1*As[:,0]
     budget2 = budget1*(1-As[:,0])
     k = budget2*As[:,1]*(1-Kc)
@@ -286,7 +286,7 @@ def transition(t,a,x):
     m_next_own = ((1-action)*jnp.clip(x[2]*(1+rh) - m, a_min = 0)).repeat(nS*nE)
     o_next_own = (x[5] - action).repeat(nS*nE)
     # renter
-    m_next_rent = (action*H*pt*0.8*(1+rh)).repeat(nS*nE)
+    m_next_rent = (action*H*pt*0.8).repeat(nS*nE)
     o_next_rent = action.repeat(nS*nE)
     
     m_next = x[5] * m_next_own + (1-x[5]) * m_next_rent
