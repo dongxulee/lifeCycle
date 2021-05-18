@@ -18,7 +18,7 @@ gamma = 4
 # relative importance of housing consumption and non durable consumption 
 alpha = 0.7
 # parameter used to calculate the housing consumption 
-kappa = 0.3
+kappa = 0
 # uB associated parameter
 B = 2
 # constant cost 
@@ -130,7 +130,7 @@ As = jnp.array(As)
 # wealth discretization 
 ws = np.linspace(0, 400, 20)
 ns = np.linspace(0, 300, 10)
-ms = np.linspace(0, 0.8*H*pt*(1+rh), 10)
+ms = np.linspace(0, 0.8*H*pt, 10)
 # scales associated with discretization
 scaleW = ws.max()/ws.size
 scaleN = ns.max()/ns.size

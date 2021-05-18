@@ -130,7 +130,7 @@ As = jnp.array(As)
 # wealth discretization 
 ws = np.linspace(0, 400, 20)
 ns = np.linspace(0, 300, 10)
-ms = np.linspace(0, 0.8*H*pt*(1+rh), 10)
+ms = np.linspace(0, 0.8*H*pt, 10)
 # scales associated with discretization
 scaleW = ws.max()/ws.size
 scaleN = ns.max()/ns.size
@@ -336,3 +336,49 @@ def V(t,V_next,x):
     v = Q.max()
     cbkha = actions[Q.argmax()]
     return v, cbkha
+
+
+##################### simulation part ############################################
+
+# calculate the stationary distribution 
+S_distribution = jnp.ones(nS)/nS
+for _ in range(100):
+    S_distribution = jnp.matmul(S_distribution, Ps)
+    
+#P(0,1)
+P01 = jnp.dot(Pe[:,0],S_distribution)
+#P(1,0)
+P10 = jnp.dot(Pe[:,1],S_distribution)
+jnp.array([[1-P01, P01],[P10, 1-P10]])
+
+E_distribution = jnp.ones(2)/2
+for _ in range(100):
+    E_distribution = jnp.matmul(E_distribution, jnp.array([[1-P01, P01],[P10, 1-P10]]))
+
+
+
+'''
+    x = [w,n,m,s,e,o]
+    x = [5,0,0,0,0,0]
+'''
+from jax import random
+
+def simulation(key):
+    initE = random.choice(a = nE, p=E_distribution, key = key)
+    initS = random.choice(a = nS, p=S_distribution, key = key)
+    x = [5, 0, 0, initS, initE, 0]
+    path = []
+    move = []
+    for t in range(T_min, T_max):
+        _, key = random.split(key)
+        if t == T_max-1:
+            _,a = V(t,Vgrid[:,:,:,:,:,:,t],x)
+        else:
+            _,a = V(t,Vgrid[:,:,:,:,:,:,t+1],x)
+        xp = transition(t,a.reshape((1,-1)),x)
+        p = xp[:,-1]
+        x_next = xp[:,:-1]
+        path.append(x)
+        move.append(a)
+        x = x_next[random.choice(a = nS*nE, p=p, key = key)]
+    return jnp.array(path), jnp.array(move)
