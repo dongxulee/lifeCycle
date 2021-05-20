@@ -25,7 +25,7 @@ B = 2
 c_h = 5
 c_s = 1000000
 # social welfare after the unemployment
-welfare = 15
+welfare = 20
 # tax rate before and after retirement
 tau_L = 0.2
 tau_R = 0.1
@@ -46,7 +46,8 @@ Pa = jnp.array(np.load("constant/prob.npy"))
 # deterministic income
 detEarning = jnp.array(np.load("constant/detEarningHigh.npy"))
 # rescale the deterministic income
-detEarning = detEarning - 10
+detEarning = detEarning
+detEarning = jnp.concatenate([detEarning[:46], detEarning[46:]-30])
 # Define transition matrix of economical states S
 Ps = np.genfromtxt('constant/Ps.csv',delimiter=',')
 fix = (np.sum(Ps, axis = 1) - 1)
@@ -81,7 +82,7 @@ Dn = [(r_bar*(1+r_bar)**N)/((1+r_bar)**N - 1) for N in Nt]
 Dn[-1] = 1
 Dn = jnp.array(Dn)
 # income fraction goes into 401k 
-yi = 0.05
+yi = 0.025
 
 
 

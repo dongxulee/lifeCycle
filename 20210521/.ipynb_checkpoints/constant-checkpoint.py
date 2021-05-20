@@ -23,7 +23,7 @@ kappa = 0.3
 B = 2
 # constant cost 
 c_h = 5
-c_s = 1000000
+c_s = H*pt*0.2
 # social welfare after the unemployment
 welfare = 20
 # tax rate before and after retirement
@@ -228,7 +228,16 @@ def R(x,a):
 def feasibleActions(t, x):
     # owner
     sell = As[:,2]
-    budget1 = yAT(t,x) + x[0] + sell*(H*pt - x[2] - c_s) + (1-sell)*(x[2] > 0)*(((t<=T_R)*tau_L + (t>T_R)*tau_R)*x[2]*rh - m)
+    payment = (x[2] > 0)*(((t<=T_R)*tau_L + (t>T_R)*tau_R)*x[2]*rh - m)
+    # if the agent is able to pay
+    if yAT(t,x) + x[0] + payment > 0:
+        sell = jnp.zeros(nA)
+        budget1 = yAT(t,x) + x[0] + (1-sell)*payment
+    # if the agent is not able to pay (force sell)
+    else:
+        sell = jnp.ones(nA)
+        budget1 = yAT(t,x) + x[0] + sell*(H*pt - x[2] - c_s)
+        
     # last term is the tax deduction of the interest portion of mortgage payment    
     h = jnp.ones(nA)*H*(1+kappa)*(1-sell) + sell*jnp.clip(budget1*As[:,0]*(1-alpha)/pr, a_max = Rl)
     c = budget1*As[:,0]*(1-sell) + sell*(budget1*As[:,0] - h*pr)
