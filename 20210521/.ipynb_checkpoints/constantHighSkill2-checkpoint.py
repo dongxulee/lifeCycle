@@ -14,7 +14,7 @@ T_R = 45
 # discounting factor
 beta = 1/(1+0.02)
 # utility function parameter 
-gamma = 3
+gamma = 2
 # relative importance of housing consumption and non durable consumption 
 alpha = 0.7
 # parameter used to calculate the housing consumption 
@@ -44,7 +44,8 @@ Pa = jnp.array(np.load("constant/prob.npy"))
 detEarning = jnp.array(np.load("constant/detEarningHigh.npy"))
 # rescale the deterministic income
 detEarning = detEarning 
-detEarning = jnp.concatenate([detEarning[:46], detEarning[46:]-30])
+####################################################################################### high skill feature
+detEarning = jnp.concatenate([detEarning[:46]*1.2, detEarning[46:]-30])
 # Define transition matrix of economical states S
 Ps = np.genfromtxt('constant/Ps.csv',delimiter=',')
 fix = (np.sum(Ps, axis = 1) - 1)
@@ -115,9 +116,9 @@ for i in range(30, T_max):
 Ms[-1] = 0
 Ms = jnp.array(Ms)
 
-
+############################################################################################################ high skill feature 
 # stock transaction fee
-Kc = 0.001
+Kc = 0
 
 
 '''
@@ -368,3 +369,19 @@ jnp.array([[1-P01, P01],[P10, 1-P10]])
 E_distribution = jnp.ones(2)/2
 for _ in range(100):
     E_distribution = jnp.matmul(E_distribution, jnp.array([[1-P01, P01],[P10, 1-P10]]))
+    
+    
+############################################################################################# solving the model
+for t in tqdm(range(T_max-1,T_min-1, -1)):
+    if t == T_max-1:
+        v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,t]))(Xs)
+    else:
+        v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,t+1]))(Xs)
+    Vgrid[:,:,:,:,:,:,t] = v.reshape(dim)
+    cgrid[:,:,:,:,:,:,t] = cbkha[:,0].reshape(dim)
+    bgrid[:,:,:,:,:,:,t] = cbkha[:,1].reshape(dim)
+    kgrid[:,:,:,:,:,:,t] = cbkha[:,2].reshape(dim)
+    hgrid[:,:,:,:,:,:,t] = cbkha[:,3].reshape(dim)
+    agrid[:,:,:,:,:,:,t] = cbkha[:,4].reshape(dim)
+    
+np.save("HighSkillWorker2",Vgrid)

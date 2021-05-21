@@ -21,9 +21,6 @@ alpha = 0.7
 kappa = 0.3
 # uB associated parameter
 B = 2
-# constant cost 
-c_h = 5
-c_s = H*pt*0.2
 # social welfare after the unemployment
 welfare = 20
 # tax rate before and after retirement
@@ -46,7 +43,7 @@ Pa = jnp.array(np.load("constant/prob.npy"))
 # deterministic income
 detEarning = jnp.array(np.load("constant/detEarningHigh.npy"))
 # rescale the deterministic income
-detEarning = detEarning
+detEarning = detEarning 
 detEarning = jnp.concatenate([detEarning[:46], detEarning[46:]-30])
 # Define transition matrix of economical states S
 Ps = np.genfromtxt('constant/Ps.csv',delimiter=',')
@@ -82,7 +79,7 @@ Dn = [(r_bar*(1+r_bar)**N)/((1+r_bar)**N - 1) for N in Nt]
 Dn[-1] = 1
 Dn = jnp.array(Dn)
 # income fraction goes into 401k 
-yi = 0.025
+yi = 0.04
 
 
 
@@ -100,6 +97,9 @@ Rl = 500
 pt = 2*250/1000
 # 30k rent 1000 sf
 pr = 2*10/1000 * 2 
+# constant cost 
+c_h = 5
+c_s = H*pt*0.4
 # Dm is used to update the mortgage payment
 Dm = [(1+rh) - rh*(1+rh)**(T_max - t)/((1+rh)**(T_max-t)-1) for t in range(T_min, T_max)]
 Dm[-1] = 0
@@ -229,22 +229,28 @@ def feasibleActions(t, x):
     # owner
     sell = As[:,2]
     payment = (x[2] > 0)*(((t<=T_R)*tau_L + (t>T_R)*tau_R)*x[2]*rh - m)
-    # if the agent is able to pay
-    if yAT(t,x) + x[0] + payment > 0:
-        sell = jnp.zeros(nA)
-        budget1 = yAT(t,x) + x[0] + (1-sell)*payment
-    # if the agent is not able to pay (force sell)
-    else:
-        sell = jnp.ones(nA)
-        budget1 = yAT(t,x) + x[0] + sell*(H*pt - x[2] - c_s)
+    
+#     # if the agent is able to pay
+#     if yAT(t,x) + x[0] + payment > 0:
+#         sell = jnp.zeros(nA)
+#         budget1 = yAT(t,x) + x[0] + (1-sell)*payment
+#     # if the agent is not able to pay (force sell)
+#     else:
+#         sell = jnp.ones(nA)
+#         budget1 = yAT(t,x) + x[0] + sell*(H*pt - x[2] - c_s)
         
+    sell = (yAT(t,x) + x[0] + payment > 0)*jnp.zeros(nA) + (yAT(t,x) + x[0] + payment <= 0)*jnp.ones(nA)
+    budget1 = yAT(t,x) + x[0] + (1-sell)*payment + sell*(H*pt - x[2] - c_s)
+    
     # last term is the tax deduction of the interest portion of mortgage payment    
     h = jnp.ones(nA)*H*(1+kappa)*(1-sell) + sell*jnp.clip(budget1*As[:,0]*(1-alpha)/pr, a_max = Rl)
     c = budget1*As[:,0]*(1-sell) + sell*(budget1*As[:,0] - h*pr)
     budget2 = budget1*(1-As[:,0])
     k = budget2*As[:,1]*(1-Kc)
     b = budget2*(1-As[:,1])
-    owner_action = jnp.column_stack((c,b,k,h,sell))   
+    owner_action = jnp.column_stack((c,b,k,h,sell)) 
+    
+    
     # renter
     buy = As[:,2]*(t < 30)
     budget1 = yAT(t,x) + x[0] - buy*(H*pt*0.2 + c_h)
