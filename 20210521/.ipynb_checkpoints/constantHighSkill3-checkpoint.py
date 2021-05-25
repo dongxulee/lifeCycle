@@ -45,7 +45,7 @@ detEarning = jnp.array(np.load("constant/detEarningHigh.npy"))
 # rescale the deterministic income
 detEarning = detEarning 
 ####################################################################################### high skill feature
-detEarning = jnp.concatenate([detEarning[:46]*1.2, detEarning[46:]-30])
+detEarning = jnp.concatenate([detEarning[:46]*1.2, detEarning[46:]-50])
 # Define transition matrix of economical states S
 Ps = np.genfromtxt('constant/Ps.csv',delimiter=',')
 fix = (np.sum(Ps, axis = 1) - 1)
@@ -384,4 +384,4 @@ for t in tqdm(range(T_max-1,T_min-1, -1)):
     hgrid[:,:,:,:,:,:,t] = cbkha[:,3].reshape(dim)
     agrid[:,:,:,:,:,:,t] = cbkha[:,4].reshape(dim)
     
-np.save("HighSkillWorker3",Vgrid)
+np.save("HighSkillWorker3_fineGrid",Vgrid)
