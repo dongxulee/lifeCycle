@@ -372,16 +372,16 @@ for _ in range(100):
     
     
 ############################################################################################# solving the model
-for t in tqdm(range(T_max-1,T_min-1, -1)):
-    if t == T_max-1:
-        v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,t]))(Xs)
-    else:
-        v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,t+1]))(Xs)
-    Vgrid[:,:,:,:,:,:,t] = v.reshape(dim)
-    cgrid[:,:,:,:,:,:,t] = cbkha[:,0].reshape(dim)
-    bgrid[:,:,:,:,:,:,t] = cbkha[:,1].reshape(dim)
-    kgrid[:,:,:,:,:,:,t] = cbkha[:,2].reshape(dim)
-    hgrid[:,:,:,:,:,:,t] = cbkha[:,3].reshape(dim)
-    agrid[:,:,:,:,:,:,t] = cbkha[:,4].reshape(dim)
+# for t in tqdm(range(T_max-1,T_min-1, -1)):
+#     if t == T_max-1:
+#         v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,t]))(Xs)
+#     else:
+#         v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,t+1]))(Xs)
+#     Vgrid[:,:,:,:,:,:,t] = v.reshape(dim)
+#     cgrid[:,:,:,:,:,:,t] = cbkha[:,0].reshape(dim)
+#     bgrid[:,:,:,:,:,:,t] = cbkha[:,1].reshape(dim)
+#     kgrid[:,:,:,:,:,:,t] = cbkha[:,2].reshape(dim)
+#     hgrid[:,:,:,:,:,:,t] = cbkha[:,3].reshape(dim)
+#     agrid[:,:,:,:,:,:,t] = cbkha[:,4].reshape(dim)
     
-np.save("HighSkillWorker3_fineGrid",Vgrid)
+# np.save("HighSkillWorker3_fineGrid",Vgrid)
