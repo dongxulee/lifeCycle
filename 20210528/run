@@ -1,0 +1,14 @@
+python constantHighSkill2.py
+sleep 20
+python constantHighSkill3.py
+sleep 20
+python constantHighSkill4.py
+sleep 20
+python constantLowSkill2.py
+sleep 20
+python constantLowSkill3.py
+sleep 20
+python constantLowSkill4.py
+sleep 20
+
+

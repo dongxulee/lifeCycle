@@ -21,6 +21,9 @@ alpha = 0.7
 kappa = 0.3
 # uB associated parameter
 B = 2
+# constant cost 
+c_h = 5
+c_s = 1000000
 # social welfare after the unemployment
 welfare = 20
 # tax rate before and after retirement
@@ -43,9 +46,8 @@ Pa = jnp.array(np.load("constant/prob.npy"))
 # deterministic income
 detEarning = jnp.array(np.load("constant/detEarningHigh.npy"))
 # rescale the deterministic income
-detEarning = detEarning 
-####################################################################################### high skill feature
-detEarning = jnp.concatenate([detEarning[:46]*1.2, detEarning[46:]-40])
+detEarning = detEarning
+detEarning = jnp.concatenate([detEarning[:46], detEarning[46:]-30])
 # Define transition matrix of economical states S
 Ps = np.genfromtxt('constant/Ps.csv',delimiter=',')
 fix = (np.sum(Ps, axis = 1) - 1)
@@ -80,7 +82,7 @@ Dn = [(r_bar*(1+r_bar)**N)/((1+r_bar)**N - 1) for N in Nt]
 Dn[-1] = 1
 Dn = jnp.array(Dn)
 # income fraction goes into 401k 
-yi = 0.04
+yi = 0.025
 
 
 
@@ -98,9 +100,6 @@ Rl = 500
 pt = 2*250/1000
 # 30k rent 1000 sf
 pr = 2*10/1000 * 2 
-# constant cost 
-c_h = 5
-c_s = H*pt*0.4
 # Dm is used to update the mortgage payment
 Dm = [(1+rh) - rh*(1+rh)**(T_max - t)/((1+rh)**(T_max-t)-1) for t in range(T_min, T_max)]
 Dm[-1] = 0
@@ -116,9 +115,9 @@ for i in range(30, T_max):
 Ms[-1] = 0
 Ms = jnp.array(Ms)
 
-############################################################################################################ high skill feature 
+
 # stock transaction fee
-Kc = 0
+Kc = 0.001
 
 
 '''
@@ -229,29 +228,14 @@ def R(x,a):
 def feasibleActions(t, x):
     # owner
     sell = As[:,2]
-    payment = (x[2] > 0)*(((t<=T_R)*tau_L + (t>T_R)*tau_R)*x[2]*rh - m)
-    
-#     # if the agent is able to pay
-#     if yAT(t,x) + x[0] + payment > 0:
-#         sell = jnp.zeros(nA)
-#         budget1 = yAT(t,x) + x[0] + (1-sell)*payment
-#     # if the agent is not able to pay (force sell)
-#     else:
-#         sell = jnp.ones(nA)
-#         budget1 = yAT(t,x) + x[0] + sell*(H*pt - x[2] - c_s)
-        
-    sell = (yAT(t,x) + x[0] + payment > 0)*jnp.zeros(nA) + (yAT(t,x) + x[0] + payment <= 0)*jnp.ones(nA)
-    budget1 = yAT(t,x) + x[0] + (1-sell)*payment + sell*(H*pt - x[2] - c_s)
-    
+    budget1 = yAT(t,x) + x[0] + sell*(H*pt - x[2] - c_s) + (1-sell)*(x[2] > 0)*(((t<=T_R)*tau_L + (t>T_R)*tau_R)*x[2]*rh - m)
     # last term is the tax deduction of the interest portion of mortgage payment    
     h = jnp.ones(nA)*H*(1+kappa)*(1-sell) + sell*jnp.clip(budget1*As[:,0]*(1-alpha)/pr, a_max = Rl)
     c = budget1*As[:,0]*(1-sell) + sell*(budget1*As[:,0] - h*pr)
     budget2 = budget1*(1-As[:,0])
     k = budget2*As[:,1]*(1-Kc)
     b = budget2*(1-As[:,1])
-    owner_action = jnp.column_stack((c,b,k,h,sell)) 
-    
-    
+    owner_action = jnp.column_stack((c,b,k,h,sell))   
     # renter
     buy = As[:,2]*(t < 30)
     budget1 = yAT(t,x) + x[0] - buy*(H*pt*0.2 + c_h)
@@ -369,19 +353,3 @@ jnp.array([[1-P01, P01],[P10, 1-P10]])
 E_distribution = jnp.ones(2)/2
 for _ in range(100):
     E_distribution = jnp.matmul(E_distribution, jnp.array([[1-P01, P01],[P10, 1-P10]]))
-    
-    
-############################################################################################# solving the model
-# for t in tqdm(range(T_max-1,T_min-1, -1)):
-#     if t == T_max-1:
-#         v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,t]))(Xs)
-#     else:
-#         v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,t+1]))(Xs)
-#     Vgrid[:,:,:,:,:,:,t] = v.reshape(dim)
-#     cgrid[:,:,:,:,:,:,t] = cbkha[:,0].reshape(dim)
-#     bgrid[:,:,:,:,:,:,t] = cbkha[:,1].reshape(dim)
-#     kgrid[:,:,:,:,:,:,t] = cbkha[:,2].reshape(dim)
-#     hgrid[:,:,:,:,:,:,t] = cbkha[:,3].reshape(dim)
-#     agrid[:,:,:,:,:,:,t] = cbkha[:,4].reshape(dim)
-    
-# np.save("HighSkillWorker3_fineGrid",Vgrid)

@@ -45,7 +45,7 @@ detEarning = jnp.array(np.load("constant/detEarningHigh.npy"))
 # rescale the deterministic income
 detEarning = detEarning 
 ####################################################################################### high skill feature
-detEarning = jnp.concatenate([detEarning[:46]*1.2, detEarning[46:]-50])
+detEarning = jnp.concatenate([detEarning[:46]*1.2, detEarning[46:]-40])
 # Define transition matrix of economical states S
 Ps = np.genfromtxt('constant/Ps.csv',delimiter=',')
 fix = (np.sum(Ps, axis = 1) - 1)

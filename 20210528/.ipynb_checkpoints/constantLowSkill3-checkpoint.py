@@ -44,8 +44,8 @@ Pa = jnp.array(np.load("constant/prob.npy"))
 detEarning = jnp.array(np.load("constant/detEarningHigh.npy"))
 # rescale the deterministic income
 detEarning = detEarning 
-####################################################################################### high skill feature
-detEarning = jnp.concatenate([detEarning[:46]*1.2, detEarning[46:]-40])
+############################################################################################ low skill feature
+detEarning = jnp.concatenate([detEarning[:46]*0.8, detEarning[46:]-30])
 # Define transition matrix of economical states S
 Ps = np.genfromtxt('constant/Ps.csv',delimiter=',')
 fix = (np.sum(Ps, axis = 1) - 1)
@@ -67,6 +67,9 @@ r_k = gkfe[:,2]/100
 # unemployment rate depending on current S state 
 Pe = gkfe[:,7:]/100
 Pe = Pe[:,::-1]
+
+############################################################################################# low skill feature
+Pe = jnp.column_stack([Pe[:,0]/2, Pe[:,1]*2])
 
 '''
     401k related constants
@@ -116,9 +119,9 @@ for i in range(30, T_max):
 Ms[-1] = 0
 Ms = jnp.array(Ms)
 
-############################################################################################################ high skill feature 
+
 # stock transaction fee
-Kc = 0
+Kc = 0.001
 
 
 '''
@@ -371,7 +374,7 @@ for _ in range(100):
     E_distribution = jnp.matmul(E_distribution, jnp.array([[1-P01, P01],[P10, 1-P10]]))
     
     
-############################################################################################# solving the model
+# ############################################################################################# solving the model
 # for t in tqdm(range(T_max-1,T_min-1, -1)):
 #     if t == T_max-1:
 #         v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,t]))(Xs)
@@ -384,4 +387,4 @@ for _ in range(100):
 #     hgrid[:,:,:,:,:,:,t] = cbkha[:,3].reshape(dim)
 #     agrid[:,:,:,:,:,:,t] = cbkha[:,4].reshape(dim)
     
-# np.save("HighSkillWorker3_fineGrid",Vgrid)
+# np.save("LowSkillWorker3",Vgrid)
