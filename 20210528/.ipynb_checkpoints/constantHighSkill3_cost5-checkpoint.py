@@ -32,6 +32,8 @@ nS = 8
 nE = 2
 # housing state
 nO = 2
+# experience state 
+nZ = 2
 
 
 '''
@@ -119,6 +121,8 @@ Ms = jnp.array(Ms)
 ############################################################################################################ high skill feature 
 # stock transaction fee
 Kc = 0
+# stock participation cost
+c_k = 5
 
 
 '''
@@ -139,15 +143,16 @@ scaleN = ns.max()/ns.size
 scaleM = ms.max()/ms.size
 
 # dimentions of the state
-dim = (ws.size, ns.size, ms.size, nS, nE, nO)
+dim = (ws.size, ns.size, ms.size, nS, nE, nO, nZ)
 dimSize = len(dim)
 
-xgrid = np.array([[w,n,m,s,e,o] for w in ws
+xgrid = np.array([[w,n,m,s,e,o,k] for w in ws
                             for n in ns
                             for m in ms
                             for s in range(nS)
                             for e in range(nE)
-                            for o in range(nO)]).reshape(dim + (dimSize,))
+                            for o in range(nO)
+                            for k in range(nZ)]).reshape(dim + (dimSize,))
 
 Xs = xgrid.reshape((np.prod(dim),dimSize))
 Xs = jnp.array(Xs)
@@ -167,8 +172,8 @@ nA = As.shape[0]
 @partial(jit, static_argnums=(0,))
 def y(t, x):
     '''
-        x = [w,n,m,s,e,o]
-        x = [0,1,2,3,4,5]
+        x = [w,n,m,s,e,o,z]
+        x = [0,1,2,3,4,5,6]
     '''
     if t <= T_R:
         return detEarning[t] * (1+gGDP[jnp.array(x[3], dtype = jnp.int8)]) * x[4] + (1-x[4]) * welfare
@@ -201,7 +206,7 @@ def gn(t, x, r = r_bar):
 #Define the utility function
 @jit
 def u(c):
-    return (jnp.log(c)/jnp.log(c))*(jnp.power(c, 1-gamma) - 1)/(1 - gamma)
+    return (jnp.power(c, 1-gamma) - 1)/(1 - gamma)
 
 #Define the bequeath function, which is a function of bequeath wealth
 @jit
@@ -213,15 +218,17 @@ def uB(tb):
 def R(x,a):
     '''
     Input:
-        x = [w,n,m,s,e,o]
-        x = [0,1,2,3,4,5]
+        x = [w,n,m,s,e,o,z]
+        x = [0,1,2,3,4,5,6]
         a = [c,b,k,h,action]
         a = [0,1,2,3,4]
     '''
     c = a[:,0]
+    b = a[:,1]
+    k = a[:,2]
     h = a[:,3]
     C = jnp.power(c, alpha) * jnp.power(h, 1-alpha)
-    return u(C)
+    return u(C) + (-1/((c > 0) * (b > 0) * (k > 0) * (h > 0)) + 1)
 
 
 # pc*qc / (ph*qh) = alpha/(1-alpha)
@@ -229,6 +236,8 @@ def R(x,a):
 def feasibleActions(t, x):
     # owner
     sell = As[:,2]
+    
+# last term is the tax deduction of the interest portion of mortgage payment
     payment = (x[2] > 0)*(((t<=T_R)*tau_L + (t>T_R)*tau_R)*x[2]*rh - m)
     
 #     # if the agent is able to pay
@@ -248,6 +257,7 @@ def feasibleActions(t, x):
     c = budget1*As[:,0]*(1-sell) + sell*(budget1*As[:,0] - h*pr)
     budget2 = budget1*(1-As[:,0])
     k = budget2*As[:,1]*(1-Kc)
+    k = k - (1-x[6])*(k>0)*c_k
     b = budget2*(1-As[:,1])
     owner_action = jnp.column_stack((c,b,k,h,sell)) 
     
@@ -259,6 +269,7 @@ def feasibleActions(t, x):
     c = (budget1*As[:,0] - h*pr)*(1-buy) + buy*budget1*As[:,0]
     budget2 = budget1*(1-As[:,0])
     k = budget2*As[:,1]*(1-Kc)
+    k = k - (1-x[6])*(k>0)*c_k
     b = budget2*(1-As[:,1])
     renter_action = jnp.column_stack((c,b,k,h,buy))
     
@@ -269,7 +280,7 @@ def feasibleActions(t, x):
 def transition(t,a,x):
     '''
         Input:
-            x = [w,n,m,s,e,o]
+            x = [w,n,m,s,e,o,z]
             x = [0,1,2,3,4,5]
             a = [c,b,k,h,action]
             a = [0,1,2,3,4]
@@ -280,6 +291,7 @@ def transition(t,a,x):
             s_next
             e_next
             o_next
+            z_next
             
             prob_next
     '''
@@ -294,6 +306,7 @@ def transition(t,a,x):
     n_next = gn(t, x)*jnp.ones(w_next.size)
     s_next = jnp.tile(jnp.arange(nS),nA).repeat(nE)
     e_next = jnp.column_stack((e.repeat(nA*nS),(1-e).repeat(nA*nS))).flatten()
+    z_next = x[6]*jnp.ones(w_next.size) + ((1-x[6]) * (k > 0)).repeat(nS*nE)
     # job status changing probability and econ state transition probability
     pe = Pe[s, e]
     ps = jnp.tile(Ps[s], nA)
@@ -308,7 +321,7 @@ def transition(t,a,x):
     
     m_next = x[5] * m_next_own + (1-x[5]) * m_next_rent
     o_next = x[5] * o_next_own + (1-x[5]) * o_next_rent   
-    return jnp.column_stack((w_next,n_next,m_next,s_next,e_next,o_next,prob_next))
+    return jnp.column_stack((w_next,n_next,m_next,s_next,e_next,o_next,z_next,prob_next))
 
 # used to calculate dot product
 @jit
@@ -323,13 +336,14 @@ def fit(v, xp):
                                                       xp[:,2]/scaleM,
                                                       xp[:,3],
                                                       xp[:,4],
-                                                      xp[:,5])),
+                                                      xp[:,5],
+                                                      xp[:,6])),
                                                      order = 1, mode = 'nearest')
 
 @partial(jit, static_argnums=(0,))
 def V(t,V_next,x):
     '''
-    x = [w,n,m,s,e,o]
+    x = [w,n,m,s,e,o,z]
     x = [0,1,2,3,4,5]
     xp:
         w_next    0
@@ -338,7 +352,8 @@ def V(t,V_next,x):
         s_next    3
         e_next    4
         o_next    5
-        prob_next 6
+        z_next    6
+        prob_next 7
     '''
     actions = feasibleActions(t,x)
     xp = transition(t,actions,x)
@@ -346,9 +361,9 @@ def V(t,V_next,x):
     TB = xp[:,0]+x[1]*(1+r_bar)+xp[:,5]*(H*pt-x[2]*(1+rh)-25)
     bequeathU = uB(TB)
     if t == T_max-1:
-        Q = R(x,actions) + beta * dotProduct(xp[:,6], bequeathU)
+        Q = R(x,actions) + beta * dotProduct(xp[:,7], bequeathU)
     else:
-        Q = R(x,actions) + beta * dotProduct(xp[:,6], Pa[t]*fit(V_next, xp) + (1-Pa[t])*bequeathU)
+        Q = R(x,actions) + beta * dotProduct(xp[:,7], Pa[t]*fit(V_next, xp) + (1-Pa[t])*bequeathU)
     Q = jnp.nan_to_num(Q, nan = -jnp.inf)
     v = Q.max()
     cbkha = actions[Q.argmax()]
@@ -371,17 +386,17 @@ for _ in range(100):
     E_distribution = jnp.matmul(E_distribution, jnp.array([[1-P01, P01],[P10, 1-P10]]))
     
     
-############################################################################################# solving the model
-# for t in tqdm(range(T_max-1,T_min-1, -1)):
-#     if t == T_max-1:
-#         v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,t]))(Xs)
-#     else:
-#         v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,t+1]))(Xs)
-#     Vgrid[:,:,:,:,:,:,t] = v.reshape(dim)
-#     cgrid[:,:,:,:,:,:,t] = cbkha[:,0].reshape(dim)
-#     bgrid[:,:,:,:,:,:,t] = cbkha[:,1].reshape(dim)
-#     kgrid[:,:,:,:,:,:,t] = cbkha[:,2].reshape(dim)
-#     hgrid[:,:,:,:,:,:,t] = cbkha[:,3].reshape(dim)
-#     agrid[:,:,:,:,:,:,t] = cbkha[:,4].reshape(dim)
+########################################################################################### solving the model
+for t in tqdm(range(T_max-1,T_min-1, -1)):
+    if t == T_max-1:
+        v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,:,t]))(Xs)
+    else:
+        v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,:,t+1]))(Xs)
+    Vgrid[:,:,:,:,:,:,:,t] = v.reshape(dim)
+    cgrid[:,:,:,:,:,:,:,t] = cbkha[:,0].reshape(dim)
+    bgrid[:,:,:,:,:,:,:,t] = cbkha[:,1].reshape(dim)
+    kgrid[:,:,:,:,:,:,:,t] = cbkha[:,2].reshape(dim)
+    hgrid[:,:,:,:,:,:,:,t] = cbkha[:,3].reshape(dim)
+    agrid[:,:,:,:,:,:,:,t] = cbkha[:,4].reshape(dim)
     
-# np.save("HighSkillWorker3_fineGrid",Vgrid)
+np.save("HighSkillWorker3_fineGrid_cost5",Vgrid)
