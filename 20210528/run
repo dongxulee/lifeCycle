@@ -1,8 +1,8 @@
 python constantHighSkill3_cost5.py
-sleep 60
+sleep 600
 python constantHighSkill3_cost10.py
-sleep 60
+sleep 600
 python constantHighSkill3_cost15.py
-sleep 60
+sleep 600
 python constantHighSkill3_cost20.py
 
