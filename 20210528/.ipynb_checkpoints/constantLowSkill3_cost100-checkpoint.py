@@ -14,7 +14,7 @@ T_R = 45
 # discounting factor
 beta = 1/(1+0.02)
 # utility function parameter 
-gamma = 6
+gamma = 3
 # relative importance of housing consumption and non durable consumption 
 alpha = 0.7
 # parameter used to calculate the housing consumption 
@@ -121,10 +121,10 @@ Ms = jnp.array(Ms)
 
 ############################################################################################################ low skill feature 
 # stock transaction fee
-Kc = 0.1
+Kc = 0.10
 
 # stock participation cost
-c_k = 100
+c_k = 10
 
 
 '''
@@ -230,7 +230,7 @@ def R(x,a):
     k = a[:,2]
     h = a[:,3]
     C = jnp.power(c, alpha) * jnp.power(h, 1-alpha)
-    return u(C) + (-1/((c > 0) * (b > 0) * (k > 0) * (h > 0)) + 1)
+    return u(C) + (-1/((c > 0) * (b >= 0) * (k >= 0) * (h > 0)) + 1)
 
 
 # pc*qc / (ph*qh) = alpha/(1-alpha)
@@ -388,17 +388,17 @@ for _ in range(100):
     E_distribution = jnp.matmul(E_distribution, jnp.array([[1-P01, P01],[P10, 1-P10]]))
     
     
-########################################################################################## solving the model
-for t in tqdm(range(T_max-1,T_min-1, -1)):
-    if t == T_max-1:
-        v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,:,t]))(Xs)
-    else:
-        v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,:,t+1]))(Xs)
-    Vgrid[:,:,:,:,:,:,:,t] = v.reshape(dim)
-    cgrid[:,:,:,:,:,:,:,t] = cbkha[:,0].reshape(dim)
-    bgrid[:,:,:,:,:,:,:,t] = cbkha[:,1].reshape(dim)
-    kgrid[:,:,:,:,:,:,:,t] = cbkha[:,2].reshape(dim)
-    hgrid[:,:,:,:,:,:,:,t] = cbkha[:,3].reshape(dim)
-    agrid[:,:,:,:,:,:,:,t] = cbkha[:,4].reshape(dim)
+######################################################################################## solving the model
+# for t in tqdm(range(T_max-1,T_min-1, -1)):
+#     if t == T_max-1:
+#         v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,:,t]))(Xs)
+#     else:
+#         v,cbkha = vmap(partial(V,t,Vgrid[:,:,:,:,:,:,:,t+1]))(Xs)
+#     Vgrid[:,:,:,:,:,:,:,t] = v.reshape(dim)
+#     cgrid[:,:,:,:,:,:,:,t] = cbkha[:,0].reshape(dim)
+#     bgrid[:,:,:,:,:,:,:,t] = cbkha[:,1].reshape(dim)
+#     kgrid[:,:,:,:,:,:,:,t] = cbkha[:,2].reshape(dim)
+#     hgrid[:,:,:,:,:,:,:,t] = cbkha[:,3].reshape(dim)
+#     agrid[:,:,:,:,:,:,:,t] = cbkha[:,4].reshape(dim)
     
-np.save("LowSkillWorker3_fineGrid_cost100",Vgrid)
+# np.save("LowSkillWorker3_fineGrid_cost100",Vgrid)

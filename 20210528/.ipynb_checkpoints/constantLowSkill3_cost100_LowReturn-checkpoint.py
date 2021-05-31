@@ -14,7 +14,7 @@ T_R = 45
 # discounting factor
 beta = 1/(1+0.02)
 # utility function parameter 
-gamma = 3
+gamma = 2
 # relative importance of housing consumption and non durable consumption 
 alpha = 0.7
 # parameter used to calculate the housing consumption 
@@ -63,7 +63,8 @@ gkfe = jnp.array(gkfe)
 # GDP growth depending on current S state
 gGDP = gkfe[:,0]/100
 # risk free interest rate depending on current S state 
-r_b = gkfe[:,1]/100
+# r_b = gkfe[:,1]/100
+r_b = 0.02*jnp.ones(nS)
 # stock return depending on current S state
 r_k = gkfe[:,2]/100
 r_k = r_k/2
@@ -121,10 +122,10 @@ Ms = jnp.array(Ms)
 
 ############################################################################################################ low skill feature 
 # stock transaction fee
-Kc = 0.10
+Kc = 0.1
 
 # stock participation cost
-c_k = 10
+c_k = 100
 
 
 '''
@@ -401,4 +402,4 @@ for _ in range(100):
 #     hgrid[:,:,:,:,:,:,:,t] = cbkha[:,3].reshape(dim)
 #     agrid[:,:,:,:,:,:,:,t] = cbkha[:,4].reshape(dim)
     
-# np.save("LowSkillWorker3_fineGrid_cost100",Vgrid)
+# np.save("LowSkillWorker3_fineGrid_cost100_LowReturn",Vgrid)
