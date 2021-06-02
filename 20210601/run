@@ -1,21 +1,26 @@
 python richHighCost.py
 sleep 180
-jupyter nbconvert --to notebook --execute richHighSimulation.ipynb
-sleep 180
-
 
 python richLowCost.py
-sleep 180
-jupyter nbconvert --to notebook --execute richLowSimulation.ipynb
 sleep 180
 
 python poorHighCost.py
 sleep 180
-jupyter nbconvert --to notebook --execute poorHighSimulation.ipynb
-sleep 180
-
 
 python poorLowCost.py
 sleep 180
+
+
+
+
+jupyter nbconvert --to notebook --execute richHighSimulation.ipynb
+sleep 180
+
+jupyter nbconvert --to notebook --execute richLowSimulation.ipynb
+sleep 180
+
+jupyter nbconvert --to notebook --execute poorHighSimulation.ipynb
+sleep 180
+
 jupyter nbconvert --to notebook --execute poorLowSimulation.ipynb
 sleep 180
