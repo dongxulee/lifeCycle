@@ -93,9 +93,9 @@ yi = 0.04
 # mortgage rate 
 rh = 0.045
 # housing unit
-H = 1000
+H = 600
 # rent unit
-Rl = 500
+Rl = 300
 # housing price constant 
 pt = 2*250/1000
 # 30k rent 1000 sf
